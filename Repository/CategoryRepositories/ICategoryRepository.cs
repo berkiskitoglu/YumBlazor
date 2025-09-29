@@ -1,6 +1,6 @@
 ﻿using YumBlazor.Data;
 
-namespace YumBlazor.Repository.IRepository
+namespace YumBlazor.Repository.CategoryRepositories
 {
     public interface ICategoryRepository
     {

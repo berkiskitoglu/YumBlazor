@@ -1,0 +1,109 @@
+﻿@page "/order/list"
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@using YumBlazor.Utility
+@inject IOrderRepository _orderRepository
+@inject NavigationManager _navigationManager
+@attribute [Authorize]
+
+@if (IsProcessing)
+{
+    <div class="position-absolute w-100 vh-100 d-flex flex-column align-items-center bg-white justify-content-center">
+        <img src="/images/loading.gif" alt="yükleniyor" />
+    </div>
+}
+
+else
+{
+    <div class="card shadow border-0 m-4">
+        <div class="card-header bg-black bg-gradient">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h2 class="text-white py-2">Sipariş Listesi</h2>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-4">
+         
+            @if (OrderHeaders.Any())
+            {
+                <RadzenDataGrid AllowFiltering="true" AllowColumnResize="true" AllowAlternatingRows="false" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="5" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+                                Data="@OrderHeaders" ColumnWidth="300px" LogicalFilterOperator="LogicalFilterOperator.Or" SelectionMode="DataGridSelectionMode.Single">
+                    <Columns>
+                        <RadzenDataGridColumn Property="Id" Filterable="true" Title="ID" Frozen="true" Width="80px"/>
+                        <RadzenDataGridColumn Property="Name" Title="Ad" Frozen="true" Width="120px" />
+                        <RadzenDataGridColumn Property="PhoneNumber" Title="Telefon Numarası" Width="120px" />
+                        <RadzenDataGridColumn Property="Email" Title="Email" Width="200px" />
+                        <RadzenDataGridColumn Property="OrderDate" Title="Sipariş Tarihi" FormatString="{0:d}" Width="120px" />
+                        <RadzenDataGridColumn Property="Status" Title="Sipariş Durumu"  Width="160px" />
+                        <RadzenDataGridColumn Property="OrderTotal" Title="Toplam Tutar" FormatString="{0:C}" Width="160px" />
+                        <RadzenDataGridColumn Title="" Frozen="false" Sortable="false" Filterable="false" Width="80px" TextAlign="TextAlign.Center">
+                            <Template Context="orderHeader">
+                                <RadzenButton Shade="Shade.Lighter" Text="Detaylar" ButtonStyle="ButtonStyle.Primary" Click="@(() => _navigationManager.NavigateTo($"order/details/{orderHeader.Id}"))"></RadzenButton>
+                            </Template>
+                        </RadzenDataGridColumn>
+                   
+                    </Columns>
+                </RadzenDataGrid>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private bool IsProcessing { get; set; } = true;
+    private IEnumerable<OrderHeader> OrderHeaders { get; set; } = new List<OrderHeader>();
+    private int DeleteCategoryID { get; set; } = 0;
+    private bool? IsAdmin { get; set; }
+    private string? UserId { get; set; }
+    [CascadingParameter]
+    public Task<AuthenticationState> _authenticationState { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadOrderHeader();
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadOrderHeader()
+    {
+        // Kategorileri yükleme işlemi burada yapılacak
+        IsProcessing = true;
+        StateHasChanged();
+
+        await CheckAuthorization();
+        @if(IsAdmin == true)
+        {
+            OrderHeaders = await _orderRepository.GetAllAsync();
+        }
+        else
+        {
+            OrderHeaders = await _orderRepository.GetAllAsync(UserId);
+        }
+
+        IsProcessing = false;
+    }
+
+    private async Task CheckAuthorization()
+    {
+        if(_authenticationState != null)
+        {
+            var authState = await _authenticationState;
+            var user = authState?.User;
+
+            IsAdmin = user?.IsInRole(SD.Role_Admin);
+            UserId = user?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        }
+    }
+
+}
+

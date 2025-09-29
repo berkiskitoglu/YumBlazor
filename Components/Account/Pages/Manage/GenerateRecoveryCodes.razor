@@ -8,7 +8,7 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<GenerateRecoveryCodes> Logger
 
-<PageTitle>Generate two-factor authentication (2FA) recovery codes</PageTitle>
+<PageTitle>İki Faktörlü Kimlik Doğrulama (2FA) Kurtarma Kodları Oluştur</PageTitle>
 
 @if (recoveryCodes is not null)
 {
@@ -16,24 +16,23 @@
 }
 else
 {
-    <h3>Generate two-factor authentication (2FA) recovery codes</h3>
+    <h3>İki Faktörlü Kimlik Doğrulama (2FA) Kurtarma Kodları Oluştur</h3>
     <div class="alert alert-warning" role="alert">
         <p>
             <span class="glyphicon glyphicon-warning-sign"></span>
-            <strong>Put these codes in a safe place.</strong>
+            <strong>Bu kodları güvenli bir yerde saklayın.</strong>
         </p>
         <p>
-            If you lose your device and don't have the recovery codes you will lose access to your account.
+            Cihazınızı kaybederseniz ve kurtarma kodlarına sahip değilseniz, hesabınıza erişimi kaybedersiniz.
         </p>
         <p>
-            Generating new recovery codes does not change the keys used in authenticator apps. If you wish to change the key
-            used in an authenticator app you should <a href="Account/Manage/ResetAuthenticator">reset your authenticator keys.</a>
+            Yeni kurtarma kodları oluşturmak, authenticator uygulamalarında kullanılan anahtarları değiştirmez. Authenticator anahtarınızı değiştirmek isterseniz <a href="Account/Manage/ResetAuthenticator">authenticator anahtarlarını sıfırlamalısınız.</a>
         </p>
     </div>
     <div>
         <form @formname="generate-recovery-codes" @onsubmit="OnSubmitAsync" method="post">
             <AntiforgeryToken />
-            <button class="btn btn-danger" type="submit">Generate Recovery Codes</button>
+            <button class="btn btn-danger" type="submit">Kurtarma Kodlarını Oluştur</button>
         </form>
     </div>
 }
@@ -53,7 +52,7 @@ else
         var isTwoFactorEnabled = await UserManager.GetTwoFactorEnabledAsync(user);
         if (!isTwoFactorEnabled)
         {
-            throw new InvalidOperationException("Cannot generate recovery codes for user because they do not have 2FA enabled.");
+            throw new InvalidOperationException("Kullanıcı için kurtarma kodları oluşturulamaz çünkü 2FA etkin değil.");
         }
     }
 
@@ -61,8 +60,8 @@ else
     {
         var userId = await UserManager.GetUserIdAsync(user);
         recoveryCodes = await UserManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
-        message = "You have generated new recovery codes.";
+        message = "Yeni kurtarma kodları oluşturuldu.";
 
-        Logger.LogInformation("User with ID '{UserId}' has generated new 2FA recovery codes.", userId);
+        Logger.LogInformation("ID'si '{UserId}' olan kullanıcı yeni 2FA kurtarma kodları oluşturdu.", userId);
     }
 }

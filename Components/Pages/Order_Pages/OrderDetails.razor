@@ -1,0 +1,127 @@
+﻿@page "/order/details/{Id:int}"
+@using System.Globalization
+@using YumBlazor.Utility
+@inject IOrderRepository _orderRepository
+@inject IJSRuntime _js
+@inject AuthenticationStateProvider _authStateProvider
+
+@if (IsProcessing)
+{
+    <div class="position-absolute w-100 vh-100 d-flex flex-column align-items-center bg-white justify-content-center">
+        <img src="/images/loading.gif" alt="yükleniyor" />
+    </div>
+}
+
+else
+{
+    <div class="container my-5 mx-auto p-5 w-100" style="max-width: 950px;">
+        <div class="card" style="max-width: 750px;">
+            <div class="pt-3 text-success text-center">
+                <span class="h4"> Sipariş Detayları</span>
+            </div>
+
+            <hr />
+            <div class="px-3">
+                <p>Sipariş ID: @OrderHeader.Id</p>
+                <p>Ad: @OrderHeader.Name</p>
+                <p>Email: @OrderHeader.Email</p>
+                <p>Telefon: @OrderHeader.PhoneNumber</p>
+                <p>Sipariş Durumu:  @OrderHeader.Status</p>
+            </div>
+            <hr />
+            <div class="card-body">
+                <h4 class="text-success">Ürünler</h4>
+
+                @foreach (var item in OrderHeader.OrderDetails)
+                {
+                    <div class="d-flex">
+                        <div class="d-flex w-100 justify-content-between">
+                            <p>
+                                &nbsp; -- @item.ProductName
+                            </p>
+                            <p>
+                                @item.Price.ToString("C2",CultureInfo.GetCultureInfo("tr-TR")) x @item.Count =
+                            </p>
+                        </div>
+                        <div class="ps-4">
+                            @((item.Price * @item.Count).ToString("C2", CultureInfo.GetCultureInfo("tr-TR")))
+                        </div>
+
+                    </div>
+
+                }
+
+
+                <hr />
+                <h4 class="text-success text-end">
+                    @OrderHeader.OrderTotal.ToString("C2",CultureInfo.GetCultureInfo("tr-TR"))
+                </h4>
+                <hr />
+
+                <div class="row">
+                    <div class="col-5">
+                        <a href="order/list" class="btn btn-secondary  m-2 p-2" style="width:150px;">Siparişlere Geri Dön</a>
+                    </div>
+                    <div class="col-7 text-end">
+
+                       
+
+                        @if (OrderHeader.Status != SD.StatusCancelled && OrderHeader.Status != SD.StatusCompleted && _authStateProvider.GetAuthenticationStateAsync().GetAwaiter().GetResult().User?.IsInRole(SD.Role_Admin) == true)
+                        {
+                            <button class="btn btn-danger m-2 p-2" @onclick="() => UpdateStatus(SD.StatusCancelled)" style="width:150px;">İptal Et</button>
+
+                            @if(OrderHeader.Status == SD.StatusPending)
+                            {
+                                <button class="btn btn-primary m-2 p-2" @onclick="() => UpdateStatus(SD.StatusReadyForPickup)" style="width:150px;">Teslim İçin Hazır</button>
+
+                            }
+
+                            @if(OrderHeader.Status == SD.StatusReadyForPickup)
+                            {
+                                <button class="btn btn-success m-2 p-2" @onclick="() => UpdateStatus(SD.StatusCompleted)" style="width:150px;">Tamamlandı</button>
+
+                            }
+
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+}
+@code {
+    private bool IsProcessing { get; set; } = true;
+    [Parameter]
+    public int Id { get; set; }
+    public OrderHeader? OrderHeader = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadOrder();
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadOrder()
+    {
+        // Kategorileri yükleme işlemi burada yapılacak
+        OrderHeader = await _orderRepository.GetAsync(Id);
+    }
+
+    private async Task UpdateStatus(string newStatus)
+    {
+        await _orderRepository.UpdateStatusAsync(Id, newStatus,"");
+        _js?.ToastrSuccess("Durum Başarıyla " + newStatus + "Güncellendi");
+    }
+}

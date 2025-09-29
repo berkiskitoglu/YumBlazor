@@ -1,8 +1,12 @@
 ﻿@page "/category/create"
 @page "/category/update/{id:int}"
+@using YumBlazor.Repository
+@using YumBlazor.Repository.CategoryRepositories
+@using YumBlazor.Services.Extensions
 @inject ICategoryRepository _categoryRepository
 @inject NavigationManager _navigationManager
 @inject IJSRuntime _jsRuntime
+
 @if (IsProcessing)
 {
     <div class="position-absolute w-75 h-75 d-flex flex-column align-items-center bg-white justify-content-center">
@@ -12,7 +16,7 @@
 
 else
 {
-    <div class="card shadow border-0 mt-4">
+    <div class="card shadow border-0 m-4">
         <div class="card-header bg-black bg-gradient">
             <div class="row">
                 <div class="col-12 text-center">

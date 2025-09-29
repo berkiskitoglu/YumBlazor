@@ -10,22 +10,24 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Register confirmation</PageTitle>
+<PageTitle>Kayıt Onayı</PageTitle>
 
-<h1>Register confirmation</h1>
+<h1>Kayıt Onayı</h1>
 
 <StatusMessage Message="@statusMessage" />
 
 @if (emailConfirmationLink is not null)
 {
     <p>
-        This app does not currently have a real email sender registered, see <a href="https://aka.ms/aspaccountconf">these docs</a> for how to configure a real email sender.
-        Normally this would be emailed: <a href="@emailConfirmationLink">Click here to confirm your account</a>
+        Bu uygulamada şu anda gerçek bir e-posta gönderici kayıtlı değil, gerçek bir e-posta gönderici yapılandırma için
+        <a href="https://aka.ms/aspaccountconf">belgelere</a> bakabilirsiniz.
+        Normalde bu bağlantı e-posta ile gönderilecekti:
+        <a href="@emailConfirmationLink">Hesabınızı onaylamak için buraya tıklayın</a>
     </p>
 }
 else
 {
-    <p role="alert">Please check your email to confirm your account.</p>
+    <p role="alert">Lütfen hesabınızı onaylamak için e-postanızı kontrol edin.</p>
 }
 
 @code {
@@ -52,11 +54,11 @@ else
         if (user is null)
         {
             HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-            statusMessage = "Error finding user for unspecified email";
+            statusMessage = "Belirtilmemiş e-posta için kullanıcı bulunamadı";
         }
         else if (EmailSender is IdentityNoOpEmailSender)
         {
-            // Once you add a real email sender, you should remove this code that lets you confirm the account
+            // Gerçek bir e-posta gönderici eklediğinizde, hesabı doğrulamayı sağlayan bu kodu kaldırmalısınız
             var userId = await UserManager.GetUserIdAsync(user);
             var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));

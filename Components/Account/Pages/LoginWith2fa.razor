@@ -9,12 +9,13 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<LoginWith2fa> Logger
 
-<PageTitle>Two-factor authentication</PageTitle>
+<PageTitle>İki Faktörlü Doğrulama</PageTitle>
 
-<h1>Two-factor authentication</h1>
+<h1>İki Faktörlü Doğrulama</h1>
 <hr />
 <StatusMessage Message="@message" />
-<p>Your login is protected with an authenticator app. Enter your authenticator code below.</p>
+<p>Girişiniz bir doğrulayıcı uygulama ile korunuyor. Aşağıya doğrulayıcı kodunuzu girin.</p>
+
 <div class="row">
     <div class="col-md-4">
         <EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post">
@@ -23,25 +24,26 @@
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode" class="form-control" autocomplete="off" />
-                <label for="Input.TwoFactorCode" class="form-label">Authenticator code</label>
+                <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode" class="form-control" autocomplete="off" placeholder="Doğrulama kodunu girin" />
+                <label for="Input.TwoFactorCode" class="form-label">Doğrulayıcı kodu</label>
                 <ValidationMessage For="() => Input.TwoFactorCode" class="text-danger" />
             </div>
             <div class="checkbox mb-3">
                 <label for="remember-machine" class="form-label">
                     <InputCheckbox @bind-Value="Input.RememberMachine" />
-                    Remember this machine
+                    Bu cihazı hatırla
                 </label>
             </div>
             <div>
-                <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+                <button type="submit" class="w-100 btn btn-lg btn-primary">Giriş Yap</button>
             </div>
         </EditForm>
     </div>
 </div>
+
 <p>
-    Don't have access to your authenticator device? You can
-    <a href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl">log in with a recovery code</a>.
+    Doğrulayıcı cihazınıza erişiminiz yok mu?
+    <a href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl">Kurtarma kodu ile giriş yapabilirsiniz</a>.
 </p>
 
 @code {
@@ -59,9 +61,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Ensure the user has gone through the username & password screen first
+        // Kullanıcının önce kullanıcı adı ve şifre ekranını geçtiğinden emin olun
         user = await SignInManager.GetTwoFactorAuthenticationUserAsync() ??
-            throw new InvalidOperationException("Unable to load two-factor authentication user.");
+            throw new InvalidOperationException("İki faktörlü doğrulama kullanıcısı yüklenemedi.");
     }
 
     private async Task OnValidSubmitAsync()
@@ -72,30 +74,30 @@
 
         if (result.Succeeded)
         {
-            Logger.LogInformation("User with ID '{UserId}' logged in with 2fa.", userId);
+            Logger.LogInformation("Kullanıcı (ID: '{UserId}') 2FA ile giriş yaptı.", userId);
             RedirectManager.RedirectTo(ReturnUrl);
         }
         else if (result.IsLockedOut)
         {
-            Logger.LogWarning("User with ID '{UserId}' account locked out.", userId);
+            Logger.LogWarning("Kullanıcı (ID: '{UserId}') hesabı kilitlendi.", userId);
             RedirectManager.RedirectTo("Account/Lockout");
         }
         else
         {
-            Logger.LogWarning("Invalid authenticator code entered for user with ID '{UserId}'.", userId);
-            message = "Error: Invalid authenticator code.";
+            Logger.LogWarning("Kullanıcı (ID: '{UserId}') için geçersiz doğrulayıcı kodu girildi.", userId);
+            message = "Hata: Geçersiz doğrulayıcı kodu.";
         }
     }
 
     private sealed class InputModel
     {
         [Required]
-        [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [StringLength(7, ErrorMessage = "{0} en az {2} ve en fazla {1} karakter uzunluğunda olmalıdır.", MinimumLength = 6)]
         [DataType(DataType.Text)]
-        [Display(Name = "Authenticator code")]
+        [Display(Name = "Doğrulayıcı kodu")]
         public string? TwoFactorCode { get; set; }
 
-        [Display(Name = "Remember this machine")]
+        [Display(Name = "Bu cihazı hatırla")]
         public bool RememberMachine { get; set; }
     }
 }

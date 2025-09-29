@@ -1,0 +1,122 @@
+﻿@page "/Product"
+@using YumBlazor.Services.Extensions
+@inject IProductRepository _ProductRepository
+@inject IJSRuntime _jsRuntime
+
+<BsModal OnModelConfirmation="ConfirmDelete_Click" ButtonBoostrapStyle="btn-danger" ButtonText="Sil" Title="Ürünü Silmek İstediğinden Emin Misin ?"></BsModal>
+
+@if (IsProcessing)
+{
+    <div class="position-absolute w-75 h-75 d-flex flex-column align-items-center bg-white justify-content-center">
+        <img src="/images/loading.gif" alt="yükleniyor" />
+    </div>
+}
+else
+{
+    <div class="card shadow border-0 mt-4">
+        <div class="card-header bg-black bg-gradient">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h2 class="text-white py-2">Ürün Listesi</h2>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <div class="row pb-3">
+                <div class="col-12 text-end">
+                    <a href="Product/create" class="btn btn-lg btn-secondary" style="width:250px"><i class="bi bi-plus-circle"></i> Yeni Ürün Ekle</a>
+                </div>
+            </div>
+            @if (Products.Any())
+            {
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr style="text-align:center">
+                            <th>Ürün Adı</th>
+                            <th>Fiyat</th>
+                            <th>Kategori</th>
+                            <th>Özel Etiket</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Products)
+                        {
+                            <tr style="text-align:center">
+                                <td>@item.Name</td>
+                                <td>@($"{item.Price:N0} ₺")</td>
+                                <td>@item.Category.Name</td>
+                                <td><span class="badge text-bg-info">@item.SpecialTag</span></td>
+                                <td><a href="@($"Product/update/{item.Id}")" class="btn btn-outline-warning"><i class="bi bi-pencil-square"></i> Güncelle</a></td>
+                                <td><button class="btn btn-outline-danger" @onclick="() => HandleDelete(item.Id)"><i class="bi bi-trash-fill"></i> Sil</button></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+
+        </div>
+    </div>
+}
+
+
+
+
+@code {
+    private bool IsProcessing { get; set; } = true;
+    private IEnumerable<Product> Products { get; set; } = new List<Product>();
+    private int DeleteProductID { get; set; } = 0;
+    private int currentPageNumber = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadCategories();
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadCategories()
+    {
+        // Ürünleri yükleme işlemi burada yapılacak
+        Products = await _ProductRepository.GetAllAsync();
+    }
+
+    private async Task HandleDelete(int id)
+    {
+        // Silme işlemi burada yapılacak
+        DeleteProductID = id;
+        await _jsRuntime.InvokeVoidAsync("ShowConfrimationModal");
+    }
+
+    private async Task ConfirmDelete_Click(bool isConfirmed)
+    {
+        IsProcessing = true;
+        await _jsRuntime.InvokeVoidAsync("HideConfrimationModal");
+
+        if (isConfirmed && DeleteProductID != 0)
+        {
+            var result = await _ProductRepository.DeleteAsync(DeleteProductID);
+            if (result)
+            {
+                await _jsRuntime.ToastrSuccess("Ürün başarıyla silindi.");
+            }
+            else
+            {
+                await _jsRuntime.ToastrError("Ürün silinirken bir hata oluştu.");
+            }
+            await LoadCategories();
+        }
+
+        DeleteProductID = 0;
+        IsProcessing = false;
+    }
+
+  
+}

@@ -2,23 +2,23 @@
 
 @inject IdentityUserAccessor UserAccessor
 
-<PageTitle>Personal Data</PageTitle>
+<PageTitle>Kişisel Veriler</PageTitle>
 
 <StatusMessage />
-<h3>Personal Data</h3>
+<h3>Kişisel Veriler</h3>
 
 <div class="row">
     <div class="col-md-6">
-        <p>Your account contains personal data that you have given us. This page allows you to download or delete that data.</p>
+        <p>Hesabınız, bize verdiğiniz kişisel verileri içerir. Bu sayfa, bu verileri indirmenize veya silmenize olanak tanır.</p>
         <p>
-            <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
+            <strong>Bu verileri silmek, hesabınızı kalıcı olarak kaldırır ve geri alınamaz.</strong>
         </p>
         <form action="Account/Manage/DownloadPersonalData" method="post">
             <AntiforgeryToken />
-            <button class="btn btn-primary" type="submit">Download</button>
+            <button class="btn btn-primary" type="submit">İndir</button>
         </form>
         <p>
-            <a href="Account/Manage/DeletePersonalData" class="btn btn-danger">Delete</a>
+            <a href="Account/Manage/DeletePersonalData" class="btn btn-danger">Sil</a>
         </p>
     </div>
 </div>

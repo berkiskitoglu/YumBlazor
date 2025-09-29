@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using YumBlazor.Data;
 
-namespace YumBlazor.Repository.IRepository
+namespace YumBlazor.Repository.CategoryRepositories
 {
     public class CategoryRepository : ICategoryRepository
     {

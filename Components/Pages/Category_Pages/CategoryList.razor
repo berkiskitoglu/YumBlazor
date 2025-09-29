@@ -1,17 +1,20 @@
 ﻿@page "/category"
-@inject ICategoryRepository categoryRepository
-
+@using YumBlazor.Repository
+@using YumBlazor.Services.Extensions
+@inject ICategoryRepository _categoryRepository
+@inject IJSRuntime _jsRuntime
+<BsModal OnModelConfirmation="ConfirmDelete_Click" ButtonBoostrapStyle="btn-danger" ButtonText="Sil" Title="Kategoriyi Silmek İstediğinden Emin Misin ?"></BsModal>
 
 @if (IsProcessing)
 {
     <div class="position-absolute w-75 h-75 d-flex flex-column align-items-center bg-white justify-content-center">
-        <img src="/images/loading.gif" alt="yükleniyor"/>
+        <img src="/images/loading.gif" alt="yükleniyor" />
     </div>
 }
 
 else
 {
-    <div class="card shadow border-0 mt-4">
+    <div class="card shadow border-0 m-4">
         <div class="card-header bg-black bg-gradient">
             <div class="row">
                 <div class="col-12 text-center">
@@ -25,22 +28,22 @@ else
                     <a href="category/create" class="btn btn-lg btn-secondary" style="width:250px"><i class="bi bi-plus-circle"></i> Yeni Kategori Ekle</a>
                 </div>
             </div>
-            @if(Categories.Any())
+            @if (Categories.Any())
             {
                 <table class="table table-bordered table-striped">
                     <thead>
                         <tr style="text-align:center">
                             <th>Kategori Adı</th>
-                           
+
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in Categories)
                         {
-                            <tr style="text-align:center" >
+                            <tr style="text-align:center">
                                 <td>@item.Name</td>
                                 <td><a href="@($"category/update/{item.Id}")" class="btn btn-outline-warning"><i class="bi bi-pencil-square"></i> Güncelle</a></td>
-                                <td><a href="@($"category/update/{item.Id}")" class="btn btn-outline-danger"><i class="bi bi-trash-fill"></i> Sil</a></td>
+                                <td><button class="btn btn-outline-danger" @onclick="() => HandleDelete(item.Id)"><i class="bi bi-trash-fill"></i> Sil</button></td>
                             </tr>
                         }
                     </tbody>
@@ -53,6 +56,7 @@ else
 @code {
     private bool IsProcessing { get; set; } = true;
     private IEnumerable<Category> Categories { get; set; } = new List<Category>();
+    private int DeleteCategoryID { get; set; } = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -72,6 +76,37 @@ else
     private async Task LoadCategories()
     {
         // Kategorileri yükleme işlemi burada yapılacak
-        Categories = await categoryRepository.GetAllAsync();
+        Categories = await _categoryRepository.GetAllAsync();
+    }
+
+    private async Task HandleDelete(int id)
+    {
+        // Silme işlemi burada yapılacak
+        DeleteCategoryID = id;
+       await _jsRuntime.InvokeVoidAsync("ShowConfrimationModal");
+    }
+
+    private async Task ConfirmDelete_Click(bool isConfirmed)
+    {
+        IsProcessing = true;
+        await _jsRuntime.InvokeVoidAsync("HideConfrimationModal");
+
+        if (isConfirmed && DeleteCategoryID != 0)
+        {
+
+            var result = await _categoryRepository.DeleteAsync(DeleteCategoryID);
+            if (result)
+            {
+                await _jsRuntime.ToastrSuccess("Kategori başarıyla silindi.");
+            }
+            else
+            {
+                await _jsRuntime.ToastrError("Kategori silinirken bir hata oluştu.");
+            }
+            await LoadCategories();
+        }
+
+        DeleteCategoryID = 0;
+        IsProcessing = false;
     }
 }

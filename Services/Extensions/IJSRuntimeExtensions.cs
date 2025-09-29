@@ -1,6 +1,6 @@
 ﻿using Microsoft.JSInterop;
 
-namespace YumBlazor.Extensions
+namespace YumBlazor.Services.Extensions
 {
     public static class JsRuntimeExtensions
     {
@@ -11,6 +11,11 @@ namespace YumBlazor.Extensions
         public static async Task ToastrWarning(this IJSRuntime js, string message)
         {
             await js.InvokeVoidAsync("ShowToastr", "warning", message);
+        }
+
+        public static async Task ToastrError(this IJSRuntime js, string message)
+        {
+            await js.InvokeVoidAsync("ShowToastr", "error", message);
         }
 
     }

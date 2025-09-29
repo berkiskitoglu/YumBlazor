@@ -1,0 +1,214 @@
+﻿@page "/product/create"
+@page "/product/update/{id:int}"
+@using YumBlazor.Repository
+@using YumBlazor.Repository.ProductRepositories
+@using YumBlazor.Services.Extensions
+@inject IProductRepository _productRepository
+@inject ICategoryRepository _categoryRepository
+@inject NavigationManager _navigationManager
+@inject IWebHostEnvironment _webHostEnvironment
+@inject IJSRuntime _jsRuntime
+
+@if (IsProcessing)
+{
+    <div class="position-absolute w-75 h-75 d-flex flex-column align-items-center bg-white justify-content-center">
+        <img src="/images/loading.gif" alt="yükleniyor" />
+    </div>
+}
+
+else
+{
+    <div class="card shadow border-0 m-4">
+        <div class="card-header bg-black bg-gradient">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <h2 class="text-white py-2">Ürün @(id > 0 ? "Güncelle" : "Ekle")</h2>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-4">
+            <EditForm Model="Product" FormName="ProductUpsertForm" OnValidSubmit="UpsertProduct">
+                <DataAnnotationsValidator></DataAnnotationsValidator>
+                <div class="border p-3 mt-4">
+                    <div class="form-floating py-3 col-12">
+                        <InputText @bind-Value="Product.Name" class="form-control" id="Name" placeholder=""></InputText>
+                        <label for="Name">Ürün Adı</label>
+                        <ValidationMessage For="@(() => Product.Name)" class="text-danger" />
+                    </div>
+                    <div class="form-floating py-3 col-12">
+                        <RadzenHtmlEditor @bind-Value=@Product.Description style="height: 450px;">
+                        
+                        </RadzenHtmlEditor>
+
+                        <ValidationMessage For="@(() => Product.Description)" class="text-danger" />
+                    </div>
+                    <div class="form-floating py-3 col-12">
+                        <InputNumber @bind-Value="Product.Price" class="form-control" id="Price" placeholder=""></InputNumber>
+                        <label for="Price">Fiyat</label>
+                        <ValidationMessage For="@(() => Product.Price)" class="text-danger" />
+                    </div>
+                    <div class="form-floating py-3 col-12">
+                        <InputText @bind-Value="Product.SpecialTag" class="form-control" id="SpecialTag" placeholder=""></InputText>
+                        <label for="SpecialTag">Özel Etiktet</label>
+                        <ValidationMessage For="@(() => Product.SpecialTag)" class="text-danger" />
+                    </div>
+                    <div class="form-floating py-3 col-12">
+                        <InputSelect @bind-Value="Product.CategoryId" class="form-select" id="Category">
+                            <option value="" disabled selected hidden>Bir Kategori Seçiniz</option>
+                            @foreach (var item in Categories)
+                            {
+                                <option value="@item.Id">@item.Name</option>
+                            }
+                        </InputSelect>
+                        <label for="Category">Kategori</label>
+
+                        <ValidationMessage For="@(() => Product.CategoryId)" class="text-danger" />
+                    </div>
+                    <div class="form-floating py-3 col-12">
+                     @if (Product.ImageUrl == null)
+                        {
+                            <InputFile onchange="LoadFiles" class="form-control" id="CustomFile" placeholder="" accept="image/x-png,image/jpeg"></InputFile>
+                            <label for="CustomFile">Görsel Yükle</label>
+                            @if (Product.ImageUrl != null)
+                            {
+                                <div class="row pt-2">
+                                    <div class="col-3">
+                                        <img src="@Product.ImageUrl" class="img-fluid img-thumbnail" />
+                                    </div>
+                                    <div class="col-md-9">
+                                        <i class="bi bi-trash btn btn-outline-danger" @onclick="DeleteImage">Kaldır</i>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                    
+                        <div class="row">
+                        @if (Product.ImageUrl != null)
+                        {
+                            <div class="col-12 mb-3">
+                                <div class="row">
+                                    <div class="col-3">
+                                        <img src="@Product.ImageUrl" class="img-fluid img-thumbnail" />
+                                    </div>
+                                    <div class="col-md-9">
+                                        <i class="bi bi-trash btn btn-outline-danger" @onclick="DeleteImage">Kaldır</i>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-6 col-md-3">
+                                <button type="submit" class="btn btn-success form-control" disabled="@IsProcessing"><i class="bi bi-floppy2-fill"></i>  @(id > 0 ? "Güncelle" : "Ekle")</button>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <a href="Product" class="btn btn-primary form-control" disabled="@IsProcessing"><i class="bi bi-arrow-bar-left"></i> Ürün Listesine Dön</a>
+                            </div>
+                        }
+                    </div>
+
+                </div>
+                
+            </EditForm>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public int id { get; set; }
+    [SupplyParameterFromForm]
+    private Product Product { get; set; } = new Product();
+    private bool IsProcessing { get; set; } = true;
+    private IEnumerable<Category> Categories = new List<Category>();
+    private string? _directoryPath { get; set; }
+
+    protected override Task OnInitializedAsync()
+    {
+        // Root kök dizinini almak için _webHostEnvironment kullanılır diğer parametrelerde yolu belirler yani wwwroot/images/product
+        _directoryPath = Path.Combine(_webHostEnvironment.WebRootPath, "images", "product");
+        return base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadProductAndCategoryList();
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadProductAndCategoryList()
+    {
+        if (id > 0)
+        {
+            Product = await _productRepository.GetAsync(id);
+
+        }
+
+        Categories = await _categoryRepository.GetAllAsync();
+    }
+
+    private async Task UpsertProduct()
+    {
+        IsProcessing = true;
+        if (Product.Id == 0)
+        {
+            // Ürün Oluştur
+            await _productRepository.CreateAsync(Product);
+            await _jsRuntime.ToastrSuccess("Ürün başarıyla oluşturuldu");
+        }
+        else
+        {
+            // Ürün Güncelle
+            await _productRepository.UpdateAsync(Product);
+            await _jsRuntime.ToastrWarning("Ürün Başarıyla Güncellendi");
+        }
+        IsProcessing = false;
+        _navigationManager.NavigateTo("Product");
+    }
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        // Yükleme işlemi başladı
+        IsProcessing = true;
+        // Tek dosya yüklenecek şekilde ayarlandı
+        var file = e.File;
+        // Dosya adı ve uzantısını almak için FileInfo kullanılır
+        System.IO.FileInfo fileInfo = new(file.Name);
+        // Dosya adı benzersiz olması için Guid kullanılır ve fileınfo değişkeninden uzantı alınır
+        var newFileName = $"{Guid.NewGuid()}{fileInfo.Extension}";
+        // Ürün Klasörü Yoksa Yukarıda tanımlanan yolda oluşturulur
+        if (!Directory.Exists(_directoryPath))
+        {
+             Directory.CreateDirectory(_directoryPath);
+        }
+        // Combine metodu ile dosya yolu ve yeni dosya adı birleştirilir
+        var path = Path.Combine(_directoryPath!, newFileName);
+        // File stream ile dosya oluşturulur , parametre olarak yolu alınır ve FileMode.Create ile dosya oluşturulur veya üzerine yazılır.
+        await using FileStream fileStream = new FileStream(path, FileMode.Create);
+        // Kullanıcıdan alınan dosya stream olarak açılır ve filestreame kopyalanır
+        await file.OpenReadStream().CopyToAsync(fileStream);
+        Product.ImageUrl = $"/images/product/{newFileName}";
+        IsProcessing = false;
+    }
+
+    void DeleteImage()
+    {
+        if (Product.ImageUrl != null)
+        {
+            var imagePath = Path.Combine(_webHostEnvironment.WebRootPath, Product.ImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (System.IO.File.Exists(imagePath))
+            {
+                System.IO.File.Delete(imagePath);
+            }
+            Product.ImageUrl = null;
+        }
+    }
+
+}
+

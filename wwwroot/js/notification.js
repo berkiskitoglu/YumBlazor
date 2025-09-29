@@ -5,4 +5,7 @@
     if (type == "warning") {
         toastr.warning(message);
     }
+    if (type == "error") {
+        toastr.error(message);
+    }
 }

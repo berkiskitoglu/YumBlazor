@@ -9,9 +9,9 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Confirm email change</PageTitle>
+<PageTitle>E-Posta Değişikliğini Onayla</PageTitle>
 
-<h1>Confirm email change</h1>
+<h1>E-Posta Değişikliğini Onayla</h1>
 
 <StatusMessage Message="@message" />
 
@@ -35,13 +35,14 @@
         if (UserId is null || Email is null || Code is null)
         {
             RedirectManager.RedirectToWithStatus(
-                "Account/Login", "Error: Invalid email change confirmation link.", HttpContext);
+                "Account/Login", "Hata: Geçersiz e-posta değişikliği onay bağlantısı.", HttpContext);
+            return;
         }
 
         var user = await UserManager.FindByIdAsync(UserId);
         if (user is null)
         {
-            message = "Unable to find user with Id '{userId}'";
+            message = $"Hata: {UserId} ID'sine sahip kullanıcı bulunamadı.";
             return;
         }
 
@@ -49,20 +50,19 @@
         var result = await UserManager.ChangeEmailAsync(user, Email, code);
         if (!result.Succeeded)
         {
-            message = "Error changing email.";
+            message = "E-posta değiştirilemedi.";
             return;
         }
 
-        // In our UI email and user name are one and the same, so when we update the email
-        // we need to update the user name.
+        // UI'da e-posta ve kullanıcı adı aynı olduğundan kullanıcı adını da güncellememiz gerekiyor
         var setUserNameResult = await UserManager.SetUserNameAsync(user, Email);
         if (!setUserNameResult.Succeeded)
         {
-            message = "Error changing user name.";
+            message = "Kullanıcı adı değiştirilemedi.";
             return;
         }
 
         await SignInManager.RefreshSignInAsync(user);
-        message = "Thank you for confirming your email change.";
+        message = "E-posta değişikliğiniz için teşekkür ederiz. Değişiklik onaylandı.";
     }
 }
